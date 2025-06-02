@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import MainLayout from '../layouts/MainLayout';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
+import axiosInstance from '@/config/axiosConfig';
+import axios from 'axios';
 
 interface Question {
   id: number;
@@ -14,58 +16,60 @@ interface Question {
   options: { id: string; text: string }[];
 }
 
-const questions: Question[] = [
-  {
-    id: 1,
-    text: 'ما هو الغرض الرئيسي لاستخدام السيارة؟',
-    options: [
-      { id: 'a', text: 'التنقل داخل المدينة' },
-      { id: 'b', text: 'رحلات طويلة بين المدن' },
-      { id: 'c', text: 'نقل العائلة' },
-      { id: 'd', text: 'استخدام تجاري' },
-    ],
-  },
-  {
-    id: 2,
-    text: 'ما هو نوع الطرق التي تقود عليها عادة؟',
-    options: [
-      { id: 'a', text: 'طرق معبدة في المدينة' },
-      { id: 'b', text: 'طرق سريعة' },
-      { id: 'c', text: 'طرق غير معبدة' },
-      { id: 'd', text: 'مزيج من الطرق المختلفة' },
-    ],
-  },
-  {
-    id: 3,
-    text: 'كم عدد الركاب الذين تنقلهم عادة؟',
-    options: [
-      { id: 'a', text: 'شخص أو شخصين' },
-      { id: 'b', text: '3-4 أشخاص' },
-      { id: 'c', text: '5-7 أشخاص' },
-      { id: 'd', text: 'أكثر من 7 أشخاص' },
-    ],
-  },
-  {
-    id: 4,
-    text: 'ما نوع الوقود الذي تفضله؟',
-    options: [
-      { id: 'a', text: 'بنزين' },
-      { id: 'b', text: 'ديزل' },
-      { id: 'c', text: 'هجين (هايبرد)' },
-      { id: 'd', text: 'كهربائي' },
-    ],
-  },
-  {
-    id: 5,
-    text: 'ما هي ميزانيتك لشراء السيارة؟',
-    options: [
-      { id: 'a', text: 'أقل من 10,000 دولار' },
-      { id: 'b', text: '10,000 - 20,000 دولار' },
-      { id: 'c', text: '20,000 - 30,000 دولار' },
-      { id: 'd', text: 'أكثر من 30,000 دولار' },
-    ],
-  },
-];
+
+
+// const questions: Question[] = [
+//   {
+//     id: 1,
+//     text: 'ما هو الغرض الرئيسي لاستخدام السيارة؟',
+//     options: [
+//       { id: 'a', text: 'التنقل داخل المدينة' },
+//       { id: 'b', text: 'رحلات طويلة بين المدن' },
+//       { id: 'c', text: 'نقل العائلة' },
+//       { id: 'd', text: 'استخدام تجاري' },
+//     ],
+//   },
+//   {
+//     id: 2,
+//     text: 'ما هو نوع الطرق التي تقود عليها عادة؟',
+//     options: [
+//       { id: 'a', text: 'طرق معبدة في المدينة' },
+//       { id: 'b', text: 'طرق سريعة' },
+//       { id: 'c', text: 'طرق غير معبدة' },
+//       { id: 'd', text: 'مزيج من الطرق المختلفة' },
+//     ],
+//   },
+//   {
+//     id: 3,
+//     text: 'كم عدد الركاب الذين تنقلهم عادة؟',
+//     options: [
+//       { id: 'a', text: 'شخص أو شخصين' },
+//       { id: 'b', text: '3-4 أشخاص' },
+//       { id: 'c', text: '5-7 أشخاص' },
+//       { id: 'd', text: 'أكثر من 7 أشخاص' },
+//     ],
+//   },
+//   {
+//     id: 4,
+//     text: 'ما نوع الوقود الذي تفضله؟',
+//     options: [
+//       { id: 'a', text: 'بنزين' },
+//       { id: 'b', text: 'ديزل' },
+//       { id: 'c', text: 'هجين (هايبرد)' },
+//       { id: 'd', text: 'كهربائي' },
+//     ],
+//   },
+//   {
+//     id: 5,
+//     text: 'ما هي ميزانيتك لشراء السيارة؟',
+//     options: [
+//       { id: 'a', text: 'أقل من 10,000 دولار' },
+//       { id: 'b', text: '10,000 - 20,000 دولار' },
+//       { id: 'c', text: '20,000 - 30,000 دولار' },
+//       { id: 'd', text: 'أكثر من 30,000 دولار' },
+//     ],
+//   },
+// ];
 
 const carRecommendations: Record<string, any[]> = {
   'aabaa': [
@@ -92,21 +96,65 @@ const defaultRecommendations = [
 ];
 
 const KnowYourNeeds = () => {
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState<number>(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [showResults, setShowResults] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+
+
+      // Fetch car data from the API
+  useEffect(() => {
+    const fetchَQuesions = async () => {
+      try {
+        const response = await axiosInstance.get('/api/questions'); // Adjust the endpoint as necessary
+        setQuestions(response.data.data);
+        
+      } catch (err) {
+        console.error("Error fetching cars:", err);
+        setError("حدث خطأ أثناء تحميل السيارات");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchَQuesions();
+  }, []);
+
+
   
-  const handleAnswer = (questionId: number, answerId: string) => {
-    setAnswers({ ...answers, [questionId]: answerId });
+  const handleAnswer = (questionId: number, chosen_option_id: string) => {
+    setAnswers({ ...answers, [questionId]: chosen_option_id });
   };
   
-  const handleNext = () => {
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
-    } else {
+  
+const handleNext = async () => {
+  if (currentQuestion < questions.length - 1) {
+    setCurrentQuestion(currentQuestion + 1);
+  } else {
+    // Prepare the data to be sent in the desired format
+    const submissionData = Object.entries(answers).map(([questionId, chosen_option_id]) => ({
+      question_id: parseInt(questionId), // Convert to number if needed
+      chosen_option_id,
+    }));
+
+    try {
+      // Send the data to your API endpoint
+      const response = await axiosInstance.post('/api/car-recommendations', { answers: submissionData });
+      console.log({ answers: submissionData })
+      console.log(response)
       setShowResults(true);
+    } catch (error) {
+      console.log({ answers: submissionData })
+      console.error("Error submitting answers:", error);
+      setError("حدث خطأ أثناء إرسال الإجابات");
     }
-  };
+  }
+};
+
+
   
   const handleBack = () => {
     if (currentQuestion > 0) {
@@ -124,6 +172,15 @@ const KnowYourNeeds = () => {
   };
   
   const progress = ((currentQuestion + 1) / questions.length) * 100;
+  
+  if (loading) {
+    return <div>Loading...</div>; // Show loading state
+  }
+
+  if (error) {
+    return <div>{error}</div>; // Show error message
+  }
+
   
   return (
     <MainLayout>

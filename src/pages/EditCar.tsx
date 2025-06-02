@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import axios from "../config/axiosConfig";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 const formSchema = z.object({
   name: z.string().min(5, {
@@ -46,8 +46,7 @@ const formSchema = z.object({
   condition: z.string().min(3, {
     message: "يرجى إدخال حالة السيارة",
   }),
-  // mileage: z.number(),
-  mileage: z.string().min(1, {
+  mileage: z.number().min(0, {
     message: "يرجى إدخال عدد المقاعد",
   }),
   fuel_type: z.string({
@@ -56,10 +55,10 @@ const formSchema = z.object({
   transmission: z.string({
     required_error: "يرجى اختيار ناقل الحركة",
   }),
-  horsepower: z.string().min(0, {
+  horsepower: z.number().min(0, {
     message: "يرجى إدخال قوة المحرك",
   }),
-  seats: z.string().min(1, {
+  seats: z.number().min(0, {
     message: "يرجى إدخال عدد المقاعد",
   }),
   color: z.string().min(3, {
@@ -72,29 +71,11 @@ const formSchema = z.object({
   other_benefits: z.string().optional()
 });
 
-const AddCar: React.FC = () => {
+const EditCar: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [carData, setCarData] = useState<any>(null);
   const navigate = useNavigate();
-  const location = useLocation();
-  console.log(location);
-
-   useEffect(() => {
-    checkToken();
-  }, []);
-  
-   const checkToken = () => {
-    const token = localStorage.getItem("token"); // Retrieve token from local storage
-    if (!token) {
-      // Redirect to sign in if not authenticated
-      navigate("/login");
-    } else {
-      // Fetch properties if authenticated
-      //  navigate(location.pathname);
-    }
-  };
-
- 
-
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -118,6 +99,21 @@ const AddCar: React.FC = () => {
     },
   });
 
+  useEffect(() => {
+    const fetchCarData = async () => {
+      try {
+        const response = await axios.get(`/api/cars/${id}`);
+        setCarData(response.data);
+        form.reset(response.data);
+      } catch (error) {
+        console.error("Error fetching car data:", error);
+        toast.error("حدث خطأ أثناء تحميل بيانات السيارة");
+      }
+    };
+
+    fetchCarData();
+  }, [id, form]);
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       const formData = new FormData();
@@ -128,7 +124,7 @@ const AddCar: React.FC = () => {
       formData.append("country_of_manufacture", values.country_of_manufacture);
       formData.append("model", values.model);
       formData.append("year", values.year);
-      formData.append("condition", values.condition)
+      formData.append("condition", values.condition);
       formData.append("mileage", values.mileage);
       formData.append("fuel_type", values.fuel_type);
       formData.append("transmission", values.transmission);
@@ -136,46 +132,44 @@ const AddCar: React.FC = () => {
       formData.append("seats", values.seats);
       formData.append("color", values.color);
       formData.append("description", values.description);
-      formData.append("is_featured", 0);
+      formData.append("is_featured", values.is_featured ? 1 : 0);
       formData.append("other_benefits", values.other_benefits);
 
-
       selectedFiles.forEach((file) => {
-        formData.append("images[]", file); // Backend should accept multiple files under "images"
+        formData.append("images[]", file);
       });
 
-      console.log(formData)
-
-      const response = await axios.post("/api/cars", formData, {
+      const response = await axios.put(`/api/cars/${id}`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
 
-      toast.success("تم إضافة السيارة بنجاح");
-      form.reset();
-      setSelectedFiles([]);
+      toast.success("تم تحديث السيارة بنجاح");
+      navigate("/user-dashboard"); // Redirect to the cars list or another page
     } catch (error) {
-      console.error("Error adding car:", error);
-      toast.error("حدث خطأ أثناء إضافة السيارة");
+      console.error("Error updating car:", error);
+      toast.error("حدث خطأ أثناء تحديث السيارة");
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
-    console.log(files)
     setSelectedFiles(files);
   };
 
+  if (!carData) {
+    return <div>Loading...</div>; // You can add a loading spinner or message here
+  }
 
   return (
     <MainLayout>
       <div className="container-custom py-16">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold mb-2">إضافة سيارة جديدة</h1>
+            <h1 className="text-3xl font-bold mb-2">تعديل السيارة</h1>
             <p className="text-muted-foreground">
-              أدخل تفاصيل السيارة لإضافتها إلى قائمة السيارات المعروضة للبيع
+              أدخل تفاصيل السيارة لتحديثها
             </p>
           </div>
 
@@ -315,21 +309,6 @@ const AddCar: React.FC = () => {
                     </FormItem>
                   )}
                 />
-
-                {/* Mileage */}
-                {/* <FormField
-                  control={form.control}
-                  name="mileage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>عدد الكيلومترات</FormLabel>
-                      <FormControl>
-                        <Input type="number" min={0} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                /> */}
 
                 {/* Mileage */}
                 <FormField
@@ -524,7 +503,7 @@ const AddCar: React.FC = () => {
                 {/* Submit Button */}
                 <div className="flex justify-center">
                   <Button type="submit" className="w-full max-w-md">
-                    <Check className="mr-2 h-4 w-4" /> إضافة السيارة
+                    <Check className="mr-2 h-4 w-4" /> تحديث السيارة
                   </Button>
                 </div>
               </form>
@@ -536,4 +515,4 @@ const AddCar: React.FC = () => {
   );
 };
 
-export default AddCar;
+export default EditCar;

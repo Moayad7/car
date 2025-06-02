@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import MainLayout from '../layouts/MainLayout';
 import { Calendar, Clock, Car, MapPin, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import axiosInstance from '@/config/axiosConfig';
 
 const rentalCars = [
   {
@@ -67,7 +68,42 @@ const rentalCars = [
 
 const locations = ['دمشق', 'حلب', 'حمص', 'اللاذقية', 'طرطوس'];
 
+
+
 const Rentals = () => {
+
+  const [cars, setCars] = useState<any[]>([]);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState<string | null>(null);
+
+// Fetch car data from the API
+  useEffect(() => {
+    const fetchCars = async () => {
+      try {
+        const response = await axiosInstance.get("/api/car-offers"); // Adjust the endpoint as necessary
+        setCars(response.data.filter((rentalcar) => rentalcar.offer_type == "rent"));
+        setLoading(false);
+        console.log(response.data);
+      } catch (err) {
+        console.error("Error fetching cars:", err);
+        setError("حدث خطأ أثناء تحميل السيارات");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCars();
+  }, []);
+
+
+    if (loading) {
+    return <div>Loading...</div>; // Show loading state
+  }
+
+  if (error) {
+    return <div>{error}</div>; // Show error message
+  }
+
   return (
     <MainLayout>
       <div className="container-custom py-28">
@@ -202,42 +238,42 @@ const Rentals = () => {
         <div>
           <h2 className="text-2xl font-bold mb-8">السيارات المتاحة للإيجار</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {rentalCars.map((car) => (
+            {cars.map((car) => (
               <div 
                 key={car.id} 
                 className={`bg-white rounded-lg overflow-hidden shadow-md transition-all hover:shadow-lg border ${!car.available ? 'opacity-75' : ''}`}
               >
                 <div className="relative h-48">
-                  <img src={car.image} alt={car.name} className="h-full w-full object-cover" />
+                  <img src={car.car.image} alt={car.car.name} className="h-full w-full object-cover" />
                   <div className="absolute top-3 right-3 bg-primary text-white text-xs px-2 py-1 rounded-full">
-                    {car.category}
+                    {car.car.category.name}
                   </div>
-                  {!car.available && (
+                  {!car.is_available && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                       <span className="text-white font-bold">غير متاح حاليًا</span>
                     </div>
                   )}
                 </div>
                 <div className="p-4">
-                  <h3 className="font-bold text-lg mb-2">{car.name}</h3>
+                  <h3 className="font-bold text-lg mb-2">{car.car.name}</h3>
                   <div className="flex justify-between items-center mb-4">
-                    <span className="text-primary font-bold text-lg">${car.pricePerDay}</span>
-                    <span className="text-sm text-muted-foreground">في اليوم</span>
+                    <span className="text-primary font-bold text-lg">{car.price_unit} {car.price}</span>
+                    <span className="text-sm text-muted-foreground">{car.pricing_period}</span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 mb-4">
-                    {car.features.map((feature, index) => (
+                    {/* {car.features.map((feature, index) => (
                       <div key={index} className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Check size={14} className="text-primary" />
                         <span>{feature}</span>
                       </div>
-                    ))}
+                    ))} */}
                   </div>
                   <Button 
-                    variant={car.available ? "default" : "outline"} 
+                    variant={car.is_available ? "default" : "outline"} 
                     className="w-full"
-                    disabled={!car.available}
+                    disabled={!car.is_available}
                   >
-                    {car.available ? 'حجز الآن' : 'غير متاح'}
+                    {car.is_available ? 'حجز الآن' : 'غير متاح'}
                   </Button>
                 </div>
               </div>

@@ -68,29 +68,36 @@ const car = {
 
 const CarDetails = () => {
   const { id } = useParams();
-  // const [car, setCar] = useState<any>(null);
+  console.log(id)
+  const [cars, setCars] = useState<any>(null);
+  const [car, setCar] = useState<any>(null);
   const [mainImage, setMainImage] = useState<string>('');
   const [phoneVisible, setPhoneVisible] = useState(false);
   const { toast } = useToast();
 
   // Fetch car data from the API
-  // useEffect(() => {
-  //   const fetchCarData = async () => {
-  //     try {
-  //       const response = await axios.get(`/cars/${id}`); // Adjust the endpoint as necessary
-  //       setCar(response.data);
-  //       setMainImage(response.data.images[0]); // Set the first image as the main image
-  //     } catch (error) {
-  //       console.error("Error fetching car data:", error);
-  //       toast({
-  //         title: "خطأ",
-  //         description: "حدث خطأ أثناء تحميل بيانات السيارة.",
-  //       });
-  //     }
-  //   };
+  useEffect(() => {
+    const fetchCarData = async () => {
+      try {
+        const response = await axios.get(`/api/cars/${id}`); // Adjust the endpoint as necessary
+        const carsRes = await axios.get(`/api/cars`); // Adjust the endpoint as necessary
+        console.log(response.data)
+        console.log(carsRes.data.data)
+        setCar(response.data);
+        setCars(carsRes.data.data);
+        setMainImage(response.data.images[0]); // Set the first image as the main image
+        
+      } catch (error) {
+        console.error("Error fetching car data:", error);
+        toast({
+          title: "خطأ",
+          description: "حدث خطأ أثناء تحميل بيانات السيارة.",
+        });
+      }
+    };
 
-  //   fetchCarData();
-  // }, [id]);
+    fetchCarData();
+  }, [id]);
 
   const handleImageClick = (image: string) => {
     setMainImage(image);
@@ -114,7 +121,7 @@ const CarDetails = () => {
     setPhoneVisible(true);
   };
 
-  if (!car) {
+  if (!cars) {
     return <div>Loading...</div>; // Show loading state
   }
 
@@ -189,7 +196,7 @@ const CarDetails = () => {
                         <Fuel size={18} className="text-muted-foreground" />
                         <div>
                           <p className="text-sm text-muted-foreground">نوع الوقود</p>
-                          <p className="font-medium">{car.fuel}</p>
+                          <p className="font-medium">{car.fuel_type}</p>
                         </div>
                       </div>
                       
@@ -205,7 +212,7 @@ const CarDetails = () => {
                         <Settings size={18} className="text-muted-foreground" />
                         <div>
                           <p className="text-sm text-muted-foreground">حجم المحرك</p>
-                          <p className="font-medium">{car.engineSize}</p>
+                          <p className="font-medium">{car.horsepower}</p>
                         </div>
                       </div>
                       
@@ -227,7 +234,7 @@ const CarDetails = () => {
                     
                     <div className="flex items-center gap-2">
                       <MapPin size={18} className="text-muted-foreground" />
-                      <p>الموقع: {car.location}</p>
+                      <p>الموقع: {car.offer.location}</p>
                     </div>
                   </div>
                 </TabsContent>
@@ -236,12 +243,12 @@ const CarDetails = () => {
                   <div className="bg-white p-6 rounded-lg shadow-sm border border-border/50">
                     <h3 className="text-lg font-bold mb-4">مميزات السيارة</h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-y-3">
-                      {car.features.map((feature, index) => (
+                      {/* {cars.offer.additional_features.map((feature, index) => (
                         <div key={index} className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-syria-terracotta"></div>
                           <span>{feature}</span>
                         </div>
-                      ))}
+                      ))} */}
                     </div>
                   </div>
                 </TabsContent>
@@ -251,12 +258,12 @@ const CarDetails = () => {
                     <h3 className="text-lg font-bold mb-4">معلومات البائع</h3>
                     <div className="flex items-center gap-4 mb-6">
                       <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center text-xl font-bold">
-                        {car.seller.name.charAt(0)}
+                        {/* {car.seller.name.charAt(0)} */}
                       </div>
                       <div>
-                        <h4 className="font-medium">{car.seller.name}</h4>
-                        <p className="text-sm text-muted-foreground">عضو منذ {car.seller.memberSince}</p>
-                        <p className="text-sm text-muted-foreground">{car.seller.otherListings} إعلانات أخرى</p>
+                        {/* <h4 className="font-medium">{car.seller.name}</h4> */}
+                        {/* <p className="text-sm text-muted-foreground">عضو منذ {car.seller.memberSince}</p> */}
+                        {/* <p className="text-sm text-muted-foreground">{car.seller.otherListings} إعلانات أخرى</p> */}
                       </div>
                     </div>
                     
@@ -265,7 +272,7 @@ const CarDetails = () => {
                       className="w-full mb-4"
                       onClick={handleContactClick}
                     >
-                      {phoneVisible ? car.seller.phone : "عرض رقم الهاتف"}
+                      {/* {phoneVisible ? car.seller.phone : "عرض رقم الهاتف"} */}
                     </Button>
                     
                     <div className="p-4 bg-muted/50 rounded-lg border border-border/50">
@@ -291,15 +298,15 @@ const CarDetails = () => {
             <Card className="mb-6">
               <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-3">
-                  <h2 className="text-2xl font-bold">{car.title}</h2>
+                  <h2 className="text-2xl font-bold">{car.name}</h2>
                 </div>
                 <div className="text-3xl font-bold text-syria-terracotta mb-4">
-                  ${car.price.toLocaleString()}
+                  ${car.offer.price.toLocaleString()}
                 </div>
                 
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
                   <MapPin size={14} />
-                  <span>{car.location}</span>
+                  <span>{car.offer.location}</span>
                 </div>
                 
                 <div className="flex gap-3 mb-6">
@@ -340,12 +347,12 @@ const CarDetails = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">نوع الوقود</span>
-                    <span className="font-medium">{car.fuel}</span>
+                    <span className="font-medium">{car.fuel_type}</span>
                   </div>
-                  <div className="flex justify-between">
+                  {/* <div className="flex justify-between">
                     <span className="text-muted-foreground">عدد الأبواب</span>
                     <span className="font-medium">{car.doors}</span>
-                  </div>
+                  </div> */}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">اللون</span>
                     <span className="font-medium">{car.color}</span>

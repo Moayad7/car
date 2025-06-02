@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import MainLayout from '../layouts/MainLayout';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast'; // Import toast for notifications
 import axios from '../config/axiosConfig'; // Import the Axios instance
 
@@ -8,13 +8,41 @@ const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [password_confirmation, setPassword_confirmation] = useState('');
+  const [role, setRole] = useState('admin'); // Default role
   const { toast } = useToast();
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  console.log(location);
+
+  useEffect(() => {
+    checkToken();
+  }, []);
+
+  const checkToken = () => {
+    const token = localStorage.getItem('token'); // Retrieve token from local storage
+    if (!token) {
+      // Redirect to sign in if not authenticated
+    } else {
+      // Fetch properties if authenticated
+      navigate('/');
+    }
+  }
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault(); // Prevent the default form submission
 
-    if (password !== confirmPassword) {
+    const user = {
+      name: name,
+      email: email,
+      password: password,
+      password_confirmation: password_confirmation,
+      role: role
+    }
+
+    console.log(user);
+    if (password !== password_confirmation) {
       toast({
         title: "خطأ",
         description: "كلمات المرور غير متطابقة.",
@@ -23,8 +51,9 @@ const Register = () => {
     }
 
     try {
-      const response = await axios.post('/register', { name, email, password }); // Adjust the endpoint as necessary
+      const response = await axios.post('/auth/register', user); // Adjust the endpoint as necessary
       console.log(response.data);
+      localStorage.setItem('token', response.data.token);
       toast({
         title: "نجاح",
         description: "تم إنشاء حسابك بنجاح.",
@@ -92,9 +121,23 @@ const Register = () => {
                 id="confirmPassword" 
                 className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="أعد إدخال كلمة المرور"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                value={password_confirmation}
+                onChange={(e) => setPassword_confirmation(e.target.value)}
               />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="role" className="block text-sm font-medium">اختر دورك</label>
+              <select 
+                id="role" 
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+              >
+                <option value="admin">أدمن</option>
+                <option value="seller">بائع</option>
+                <option value="workshop">صاحب ورشة</option>
+              </select>
             </div>
             
             <div className="flex items-center">

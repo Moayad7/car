@@ -1,14 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown, Car, ShoppingBag, Clock, HelpCircle, PlusCircle } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, ChevronDown, Car, ShoppingBag, Clock, HelpCircle, PlusCircle, Settings, ShoppingBagIcon, LogIn, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import logo from '../../dist/assets/logo/22-03.png'
+import { Button } from './ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const token = localStorage.getItem("token");
+  const navigate = useNavigate();
+  const {toast} = useToast()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,6 +26,14 @@ const Navbar = () => {
 
   const toggleMenu = () => setIsOpen(!isOpen);
   const closeMenu = () => setIsOpen(false);
+  const handleLogOut = () => {localStorage.removeItem("token")
+    navigate('/')
+    window.location.reload();
+    toast({
+        title: "خطأ",
+        description: "فشل تسجيل الدخول. تحقق من بيانات الاعتماد الخاصة بك.",
+      });
+  }
 
   const navLinks = [
     { name: 'الرئيسية', path: '/' },
@@ -28,6 +41,8 @@ const Navbar = () => {
     { name: 'إيجار سيارات', path: '/rentals', icon: <Clock size={16} /> },
     { name: 'قطع غيار', path: '/spare-parts', icon: <ShoppingBag size={16} /> },
     { name: 'اعرف احتياجاتك', path: '/know-your-needs', icon: <HelpCircle size={16} /> },
+    { name: 'الورشات', path: '/workshops', icon: <ShoppingBagIcon size={16} /> },
+    { name: 'لوحة التحكم', path: '/user-dashboard', icon: <Settings size={16} /> }
   ];
 
   return (
@@ -69,12 +84,24 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
+            {!token ? 
             <Link
               to="/login"
-              className="px-4 py-2 text-sm font-medium text-foreground/80 hover:text-syria-terracotta transition-colors"
+              className="px-4 py-2 text-sm font-medium text-foreground/80 hover:text-syria-terracotta transition-colors flex items-center gap-1"
             >
+              <LogIn size={16} />
               تسجيل الدخول
             </Link>
+            :
+            <button
+            onClick={handleLogOut}
+              className="px-4 py-2 text-sm font-medium text-foreground/80 hover:text-syria-terracotta transition-colors flex items-center gap-1"
+            >
+              <LogOut size={16} />
+              تسجيل الخروج
+            </button>
+            }
+            
             <Link
               to="/add-car"
               className="button-primary text-sm flex items-center gap-1.5"

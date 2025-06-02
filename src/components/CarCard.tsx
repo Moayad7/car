@@ -71,7 +71,7 @@ const CarCard = ({
         <div className="flex justify-between items-start gap-2 mb-2">
           <h3 className="font-medium text-lg leading-tight">{title}</h3>
           <span className="font-semibold text-lg text-syria-terracotta whitespace-nowrap">
-            ${price.toLocaleString()}
+            ${price ? price.toLocaleString(): ''}
           </span>
         </div>
 
@@ -87,7 +87,7 @@ const CarCard = ({
           </div>
           <div className="flex flex-col items-center p-2 bg-muted/50 rounded-md">
             <Gauge size={16} className="text-muted-foreground mb-1" />
-            <span className="text-xs font-medium">{mileage.toLocaleString()} كم</span>
+            <span className="text-xs font-medium">{mileage || mileage == 0 ?mileage.toLocaleString(): '???'} كم</span>
           </div>
           <div className="flex flex-col items-center p-2 bg-muted/50 rounded-md">
             <Fuel size={16} className="text-muted-foreground mb-1" />
